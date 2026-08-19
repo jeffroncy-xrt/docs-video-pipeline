@@ -40,9 +40,29 @@ def hashtags_from_tags(tags, n=6):
     return out
 
 
+# YouTube renders a chapter list only from >=3 stamps with the first at 0:00.
+MIN_CHAPTERS = 3
+
+
+def chapters_ok(chapters):
+    """Whether this list will actually render as chapters on YouTube."""
+    return len(chapters) >= MIN_CHAPTERS and bool(chapters) and chapters[0][0] in ("00:00", "0:00")
+
+
+def has_chapters(description):
+    """Whether a FINISHED description carries a working chapter list.
+
+    Checked against the rendered text rather than the list it was built from, so
+    it also catches a description that was replaced or truncated downstream.
+    """
+    lines = [l.strip() for l in (description or "").splitlines()]
+    stamps = [l for l in lines if re.match(r"^\d?\d:\d\d(:\d\d)?\s+\S", l)]
+    return len(stamps) >= MIN_CHAPTERS and stamps[0].startswith(("00:00", "0:00"))
+
+
 def format_description(hook, chapters, source, hashtags):
     parts = [hook.strip(), ""]
-    if len(chapters) >= 3:                   # <3 -> skip rather than emit a broken block
+    if chapters_ok(chapters):                # <3 -> skip rather than emit a broken block
         parts.append("Chapters:")
         parts += [f"{ts} {title}" for ts, title in chapters]
         parts.append("")
@@ -85,6 +105,11 @@ def main(argv):
     seo["description"] = format_description(hook, chaps, source, hashtags)[:5000]
     json.dump(seo, open(f"{ep}/seo.json", "w"), indent=2, ensure_ascii=False)
     print(f"description rebuilt: {len(chaps)} chapters, {len(hashtags)} hashtags")
+    # Loud, because silence is exactly how guanches-canary published with none:
+    # the block was skipped correctly and nothing said so.
+    if not has_chapters(seo["description"]):
+        print(f"QA-WARN: description has NO chapter list ({len(chaps)} chapter(s) "
+              f"found; YouTube needs {MIN_CHAPTERS} starting at 00:00)")
     return 0
 
 

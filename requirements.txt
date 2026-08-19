@@ -1,2 +1,21 @@
+# Rendering
 pillow>=10
 numpy>=1.26
+
+# Narration. Local neural TTS — no account, no key, no per-episode cost.
+kokoro-onnx>=0.4.7
+onnxruntime>=1.17
+
+# Uploading. Omitting these was a real bug: the pipeline imports them at module
+# scope, so a tree installed without them cannot upload and cannot even collect
+# its own tests.
+google-api-python-client>=2.147
+google-auth-oauthlib>=1.2
+google-auth>=2.35
+google-auth-httplib2>=0.2
+
+# Stock footage download
+yt-dlp>=2024.8.6
+
+# The product ships its test suite, and `make test` runs it.
+pytest>=8

@@ -1,12 +1,31 @@
 import json
 from PIL import Image, ImageDraw, ImageFilter
 
-GEO = json.load(open('assets/us-states.json'))
+# Loaded on demand, not at import. This is optional data: it draws the US
+# state map used by topics that are specific to one state. Reading it at import
+# meant that an install without the file could not import maprender at all —
+# and therefore could not import viz, or collect its own test suite — for a
+# feature most channels never touch.
+_GEO = None
+
+
+def geo():
+    """The state geometry, or an empty collection if the file is absent."""
+    global _GEO
+    if _GEO is None:
+        try:
+            with open('assets/us-states.json') as fh:
+                _GEO = json.load(fh)
+        except (OSError, ValueError):
+            _GEO = {'type': 'FeatureCollection', 'features': []}
+    return _GEO
+
+
 SKIP = {'Alaska','Hawaii','Puerto Rico'}
 
 def lower48():
     feats=[]
-    for f in GEO['features']:
+    for f in geo()['features']:
         nm=f['properties'].get('name','')
         if nm in SKIP: continue
         feats.append(f)
@@ -21,12 +40,19 @@ def all_rings(feat):
             for ring in poly: out.append(ring)
     return out
 
+# Continental US extent, used when the geometry file is absent so projection
+# stays defined and render_map simply draws nothing.
+_EMPTY_BOUNDS = (-124.8, -66.9, 24.4, 49.4)
+
+
 def bounds():
     xs=[];ys=[]
     for f in lower48():
         for ring in all_rings(f):
             for lon,lat in ring:
                 xs.append(lon);ys.append(lat)
+    if not xs:
+        return _EMPTY_BOUNDS
     return min(xs),max(xs),min(ys),max(ys)
 
 LON_MIN,LON_MAX,LAT_MIN,LAT_MAX=bounds()

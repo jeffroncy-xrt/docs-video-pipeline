@@ -15,6 +15,10 @@ _TEAL = (70, 150, 130)
 SCENE_STYLE = {
     "plain":  (GOLD,    150, 210,  72, "l"),
     "theory": (_TEAL,   140, 250,  82, "l"),
+    # "evidence" is the technical/abstract beat — the chart, the diagram, the
+    # scan. "dna" is the pre-1.0 name for the same scene and still renders, so
+    # episodes written before the rename are unaffected.
+    "evidence": (_TEAL, 150, 210,  74, "l"),
     "dna":    (_TEAL,   150, 210,  74, "l"),
     "fact":   (GOLD_BR, 170, 300,  96, "c"),
     "reveal": (RED_BR,  150, 300, 104, "c"),

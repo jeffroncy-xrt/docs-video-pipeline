@@ -155,7 +155,11 @@ def compose(beat):
     if s=='chapter':
         d=ImageDraw.Draw(img)
         d.line([(150,H//2-120),(150,H//2+120)],fill=GOLD,width=4)
-        spaced(d,(210,H//2-110),beat.get('kicker','CHAPTER').upper(),body_b(30),GOLD,ls=8)
+        # No 'CHAPTER' fallback: the word itself is what the user asked to lose
+        # (2026-08-16).  A kicker the writer supplied still shows; nothing is
+        # invented to fill the space.
+        if beat.get('kicker'):
+            spaced(d,(210,H//2-110),beat['kicker'].upper(),body_b(30),GOLD,ls=8)
         fnt=disp(150)
         lines=wrap(d,beat['headline'],fnt,W-420)
         yy=H//2-60
@@ -170,7 +174,7 @@ def compose(beat):
         headline(img,beat['headline'],y=300,size=96,maxw=int(W*0.46))
         return caption_bar(img,cap)
 
-    if s=='dna':
+    if s in ('evidence', 'dna'):
         img=draw_dna(img,int(W*0.74),H//2,820,turns=3.2,amp=150)
         kicker(img,beat.get('kicker','THE EVIDENCE'))
         headline(img,beat['headline'],y=300,size=104,maxw=int(W*0.5))
