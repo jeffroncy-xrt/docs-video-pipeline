@@ -10,8 +10,8 @@
 
 It plans an episode as a sequence of narrated beats, sources visuals for each,
 synthesises a voice track, builds an ffmpeg filter graph with transitions,
-renders the episode, and uploads it on a schedule — inside a 1.4 GB memory
-ceiling on a host shared with four other services.
+renders the episode, and uploads it on a schedule — inside a hard cgroup memory
+ceiling on a host shared with other always-on services.
 
 ## What is in this excerpt
 
@@ -54,6 +54,24 @@ reported it as healthy.
 **Duration is gated before publishing, not after.** `length_gate.py` refuses an
 episode that misses its target, because an upstream shortage otherwise produces
 a short episode that publishes itself.
+
+**Episode-wide invariants live on disk, not in memory.** The render stages run
+as separate processes, so an in-memory dedup set cannot see across them — one
+archival photo quietly filled ~90 slots before this was understood. Identity
+and reuse ledgers are files with content hashes; anything one stage needs to
+know about another stage's output has to survive a process boundary.
+
+**Cap the rented GPU per day, and record spend on every exit path.** GPU time
+is bought per minute against a fixed daily budget, enforced before renting and
+by clamping timeouts to what the day can still afford. Every renter appends to
+the same spend ledger on every exit — normal, timeout, or crash — because a
+ledger that only records the happy path silently under-reports.
+
+**Rented models drift under you; pin the shape, not the version.** An upstream
+return-type change broke every batch run overnight while a per-item fallback
+kept output flowing. The fix reads fields by attribute, and the suite asserts
+the batch shape — so the next upstream change fails loudly in tests instead of
+quietly in production.
 
 ## What is not included
 
